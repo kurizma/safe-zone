@@ -15,12 +15,6 @@ pipeline {
             }
         }
 
-        stage('Smoke') {
-            steps {
-                echo 'Jenkins pipeline skeleton works'
-            }
-        }
-
         stage('Backend - discovery-service') {
             steps {
                 dir('backend/discovery-service') {
@@ -56,6 +50,15 @@ pipeline {
             steps {
                 dir('backend/media-service') {
                     sh './mvnw clean verify'
+                }
+            }
+        }
+        stage('Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci'
+                    sh 'npm test -- --watch=false --no-progress || ng test --no-watch --no-progress'
+                    sh 'ng build --configuration production'
                 }
             }
         }
