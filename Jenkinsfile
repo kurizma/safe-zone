@@ -44,5 +44,20 @@ pipeline {
                 }
             }
         }
+       stage('Backend - product-service') {
+            steps {
+                dir('backend/product-service') {
+                    sh './mvnw clean verify'
+                }
+            }
+        }
+
+        stage('Backend - media-service') {
+            steps {
+                dir('backend/media-service') {
+                    sh './mvnw clean verify'
+                }
+            }
+        }
     }
 }
