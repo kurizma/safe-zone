@@ -8,12 +8,17 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 
-const mockUser = { id: 'seller1', name: 'John Seller', role: 'SELLER', avatar: 'avatar.jpg' };
+const mockUser =
+    {
+        id: 'seller1',
+        // name: 'John Seller',
+        role: 'SELLER',
+        avatar: 'avatar.jpg' };
 const mockProducts = [
   {
     id: '1',
     name: 'T-Shirt',
-    // price: 19.99,
+    price: 19.99,
     images: ['tshirt.jpg'],
     categoryId: 'cat1',
     quantity: 10,
