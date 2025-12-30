@@ -233,7 +233,7 @@ pipeline {
     post {
         always {
             script {
-                junit 'backend/*/target/surefire-reports/*.xml'
+                junit 'backend/*/target/surefire-report/*.xml'
                 archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
 
                 junit allowEmptyResults: true, testResults: 'frontend/test-results/junit/*.xml'
