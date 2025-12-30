@@ -22,7 +22,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1a
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -35,6 +35,7 @@ services:
   discovery-service:
     build:
       context: ./backend/discovery-service
+    image: discovery-service:${IMAGE_TAG:-latest}
     ports: ["8761:8761"]
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -42,6 +43,7 @@ services:
   # === GATEWAY ===
   gateway-service:
     build: ./backend/gateway-service
+    image: gateway-service:${IMAGE_TAG:-latest}
     ports: ["8080:8080"]
     depends_on:
       - discovery-service
@@ -52,6 +54,7 @@ services:
   # === BUSINESS SERVICES ===
   user-service:
     build: ./backend/user-service
+    image: user-service:${IMAGE_TAG:-latest}
     depends_on:
       - discovery-service
     environment:
@@ -61,6 +64,7 @@ services:
 
   product-service:
     build: ./backend/product-service
+    image: product-service:${IMAGE_TAG:-latest}
     depends_on:
       - discovery-service
       - kafka
@@ -71,6 +75,7 @@ services:
 
   media-service:
     build: ./backend/media-service
+    image: media-service:${IMAGE_TAG:-latest}
     depends_on:
       - discovery-service
       - kafka
@@ -85,6 +90,7 @@ services:
   # === FRONTEND ===
   frontend:
     build: ./frontend
+    image: frontend:${IMAGE_TAG:-latest}
     ports: ["4200:443"]
     depends_on: [gateway-service]
 
