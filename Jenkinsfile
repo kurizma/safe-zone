@@ -195,7 +195,7 @@ pipeline {
 
                             withEnv(["IMAGE_TAG=${STABLE_TAG}"]) {
                                 sh 'docker compose -f docker-compose.yml up -d'
-
+                            }
                         } catch (Exception e) {
                             echo "Deployment failed or crashed! Initiating rollback..."
                             echo "Reason: ${e.getMessage()}"
