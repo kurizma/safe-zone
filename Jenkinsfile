@@ -1,16 +1,37 @@
 pipeline {
     agent any
 
+    /**********************
+     * Global configuration
+     **********************/
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to build')
+    }
+
+    environment {
+        // Credentials
+        SLACK_WEBHOOK = credentials('slack-webhook')
+
+        // Image versioning
+        VERSION    = "v${env.BUILD_NUMBER}"
+        STABLE_TAG = "stable"
+    }
+
     tools {
         maven 'maven-3.9'
+        nodejs 'node-20.19.6'
     }
 
     stages {
+
+        /************
+         * Checkout *
+         ************/
         stage('Checkout') {
             steps {
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']],
+                    branches: [[name: "*/${params.BRANCH}"]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/kurizma/java-jenk.git',
                         credentialsId: 'github-java-jenk'
@@ -19,6 +40,9 @@ pipeline {
             }
         }
 
+        /***********************
+         * Backend microservices
+         ***********************/
         stage('Backend - discovery-service') {
             steps {
                 dir('backend/discovery-service') {
@@ -42,7 +66,8 @@ pipeline {
                 }
             }
         }
-       stage('Backend - product-service') {
+
+        stage('Backend - product-service') {
             steps {
                 dir('backend/product-service') {
                     sh 'mvn clean verify'
@@ -57,42 +82,86 @@ pipeline {
                 }
             }
         }
+
+        /************
+         * Frontend *
+         ************/
         stage('Frontend') {
             steps {
                 dir('frontend') {
-                    nodejs(nodeJSInstallationName: 'node-20.19.6') { // exact NodeJS tool name
+                    // Use global NodeJS tool
+                    nodejs(nodeJSInstallationName: 'node-20.19.6') {
                         sh 'npm ci'
+                        // Adjust test command as needed for Karma/Jasmine JUnit output
                         sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --no-progress'
                         sh 'npx ng build --configuration production'
                     }
                 }
             }
         }
-        stage('Deploy') {
+
+        /************************
+         * Build Docker images  *
+         ************************/
+        stage('Build Images') {
             steps {
                 script {
-                    // Work from project root where docker-compose.yml is
+                    echo "Building Docker images with tag: ${VERSION}"
                     dir("${env.WORKSPACE}") {
-                        try {
-                            // 1) Stop any existing stack for this project
-                            sh 'docker compose -f docker-compose.yml down'
-
-                            // 2) Rebuild images and start containers in background
-                            sh 'docker compose -f docker-compose.yml up -d --build'
-                        } catch (err) {
-                            echo "Deploy failed: ${err}"
-                            echo "Attempting basic rollback (restart previous containers without rebuild)..."
-
-                            // Basic rollback: restart stack with existing local images
-                            sh 'docker compose -f docker-compose.yml down || true'
-                            sh 'docker compose -f docker-compose.yml up -d || true'
-
-                            // Mark build as failed so the broken deployment is visible
-                            error "Deployment failed and rollback was attempted."
+                        withEnv(["IMAGE_TAG=${VERSION}"]) {
+                            // Ensure docker-compose.yml uses ${IMAGE_TAG} for image tags
+                            sh 'docker compose -f docker-compose.yml build'
                         }
                     }
                 }
             }
         }
-    }
-}
+
+        /******************************
+         * Deploy, verify, and rollback
+         ******************************/
+        stage('Deploy & Verify') {
+            steps {
+                script {
+                    dir("${env.WORKSPACE}") {
+                        try {
+                            echo "Deploying version: ${VERSION}"
+
+                            // Deploy NEW version (do not down first to avoid hard downtime if possible)
+                            withEnv(["IMAGE_TAG=${VERSION}"]) {
+                                sh 'docker compose -f docker-compose.yml up -d'
+
+                                echo "Waiting for services to stabilize..."
+                                sleep 15
+
+                                // Basic health check: fail if any container is in Exit state
+                                sh """
+                                    if docker compose -f docker-compose.yml ps | grep "Exit"; then
+                                        echo "Detected crashed containers!"
+                                        exit 1
+                                    fi
+                                """
+                            }
+
+                            echo "Deployment verification passed. Tagging images as stable..."
+
+                            // Tag images with stable tag after successful verification
+                            sh """
+                                docker tag frontend:${VERSION}         frontend:${STABLE_TAG}         || true
+                                docker tag discovery-service:${VERSION} discovery-service:${STABLE_TAG} || true
+                                docker tag gateway-service:${VERSION}   gateway-service:${STABLE_TAG}   || true
+                                docker tag user-service:${VERSION}      user-service:${STABLE_TAG}      || true
+                                docker tag product-service:${VERSION}   product-service:${STABLE_TAG}   || true
+                                docker tag media-service:${VERSION}     media-service:${STABLE_TAG}     || true
+                            """
+
+                        } catch (Exception e) {
+                            echo "Deployment failed or crashed! Initiating rollback..."
+                            echo "Reason: ${e.getMessage()}"
+
+                            // ROLLBACK: redeploy previous stable images
+                            try {
+                                withEnv(["IMAGE_TAG=${STABLE_TAG}"]) {
+                                    sh 'docker compose -f docker-compose.yml up -d'
+                                }
+                                echo "Rolled back to previous
