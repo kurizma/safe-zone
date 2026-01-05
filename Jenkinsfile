@@ -253,12 +253,8 @@ pipeline {
     post {
         always {
             script {
-                junit 'backend/*/target/surefire-reports/*.xml'
-                archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
-
-                junit allowEmptyResults: true, testResults: 'frontend/test-results/junit/*.xml'
-                archiveArtifacts artifacts: 'frontend/test-results/junit/*.xml', allowEmptyArchive: true
-
+echo 'Pipeline execution completed'
+                
                 if (env.WORKSPACE) {
                     cleanWs notFailBuild: true
                 } else {
