@@ -257,7 +257,7 @@ pipeline {
 
         success {
             echo "Build succeeded! Sending Slack notification..."
-            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
+            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
                 sh """
                     curl -sS -X POST -H 'Content-type: application/json' --data '{
                         "text": ":white_check_mark: Build SUCCESS\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}"
@@ -268,8 +268,7 @@ pipeline {
 
         failure {
             echo "Build failed! Sending Slack notification..."
-            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
-                sh """
+            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
                     curl -sS -X POST -H 'Content-type: application/json' --data '{
                         "text": ":x: Build FAILED\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Result:* ${currentBuild.currentResult}"
                     }' "${SLACK_WEBHOOK_URL}" || echo "Slack notification failed (non-fatal)"
