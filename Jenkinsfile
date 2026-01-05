@@ -168,6 +168,18 @@ pipeline {
                         try {
                             echo "Deploying version: ${VERSION}"
 
+                            // Cleanup: Stop only the versioned containers (v14, v13, etc)
+                            // but keep the stable ones running as backup
+                            echo "Cleaning up old versioned containers..." 
+                            sh """
+                                withEnv(["IMAGE_TAG=${VERSION}"]) {
+                                    docker compose -f docker-compose.yml down || true
+                                }                                
+                                sleep 3
+                                echo "Old versioned containers cleaned up"
+                            """
+
+                            // Now deploy the new version
                             withEnv(["IMAGE_TAG=${VERSION}"]) {
                                 sh 'docker compose -f docker-compose.yml up -d'
 
@@ -209,7 +221,7 @@ pipeline {
                                 }
                                 echo "Rolled back to previous stable version."
 
-                                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
+                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
                                     sh '''
                                     curl -sS -X POST -H "Content-type: application/json" --data "{
                                         \\"text\\": \\":information_source: Rollback SUCCESSFUL!\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${BRANCH}\\"
@@ -220,7 +232,7 @@ pipeline {
                                 echo "FATAL: Rollback failed!"
                                 echo "Reason: ${rollbackErr.getMessage()}"
 
-                                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK_URL')]) {
+                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
                                     sh '''
                                     curl -sS -X POST -H "Content-type: application/json" --data "{
                                         \\"text\\": \\":rotating_light: Rollback FAILED\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${BRANCH}\\n*Reason:* see Jenkins logs\\"
