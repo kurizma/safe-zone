@@ -10,7 +10,7 @@ pipeline {
 
     environment {
         // Credentials
-        SLACK_WEBHOOK = credentials('slack-webhook')
+        SLACK_WEBHOOK = credentials('webhook-slack-safe-zone')
 
         // Image versioning
         VERSION    = "v${env.BUILD_NUMBER}"
