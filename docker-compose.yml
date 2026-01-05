@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 x-common-env: &common-env
   EUREKA_CLIENT_SERVICE-URL-DEFAULTZONE: http://discovery-service:8761/eureka/
