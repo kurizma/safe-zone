@@ -162,63 +162,65 @@ pipeline {
                 script {
                     def scannerHome = tool name: 'SonarQube Scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                     env.PATH = "${scannerHome}/bin:${env.PATH}"
-                    
-                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'), 
-                                string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
-                        dir('backend/discovery-service') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-discovery-service \
-                                    -Dsonar.projectName="Safe Zone - Discovery Service" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
-                        }
-                        dir('backend/gateway-service') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-gateway-service \
-                                    -Dsonar.projectName="Safe Zone - Gateway Service" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
-                        }
-                        dir('backend/user-service') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-user-service \
-                                    -Dsonar.projectName="Safe Zone - User Service" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
-                        }
-                        dir('backend/product-service') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-product-service \
-                                    -Dsonar.projectName="Safe Zone - Product Service" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
-                        }
-                        dir('backend/media-service') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-media-service \
-                                    -Dsonar.projectName="Safe Zone - Media Service" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
+
+                    withSonarQubeEnv('SonarQube Dev') {              
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'), 
+                                    string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
+                            dir('backend/discovery-service') {
+                                sh '''
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-discovery-service \
+                                        -Dsonar.projectName="Safe Zone - Discovery Service" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
+                            dir('backend/gateway-service') {
+                                sh '''
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-gateway-service \
+                                        -Dsonar.projectName="Safe Zone - Gateway Service" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
+                            dir('backend/user-service') {
+                                sh '''
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-user-service \
+                                        -Dsonar.projectName="Safe Zone - User Service" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
+                            dir('backend/product-service') {
+                                sh '''
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-product-service \
+                                        -Dsonar.projectName="Safe Zone - Product Service" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
+                            dir('backend/media-service') {
+                                sh '''
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-media-service \
+                                        -Dsonar.projectName="Safe Zone - Media Service" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
                         }
                     }
                 }
@@ -231,20 +233,22 @@ pipeline {
                     script {
                         def scannerHome = tool name: 'SonarQube Scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                         env.PATH = "${scannerHome}/bin:${env.PATH}"
-                        
-                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
-                                    string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
-                            sh '''
-                                npm ci
-                                sonar-scanner \
-                                    -Dsonar.projectKey=safe-zone-frontend \
-                                    -Dsonar.projectName="Safe Zone - Frontend" \
-                                    -Dsonar.sources=src \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.exclusions=**/*.spec.ts,node_modules/** \
-                                    -Dsonar.host.url=${SONAR_HOST} \
-                                    -Dsonar.login=${SONAR_TOKEN}
-                            '''
+
+                        withSonarQubeEnv('SonarQube Dev') {
+                            withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
+                                        string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
+                                sh '''
+                                    npm ci
+                                    sonar-scanner \
+                                        -Dsonar.projectKey=safe-zone-frontend \
+                                        -Dsonar.projectName="Safe Zone - Frontend" \
+                                        -Dsonar.sources=src \
+                                        -Dsonar.java.binaries=target/classes \
+                                        -Dsonar.exclusions=**/*.spec.ts,node_modules/** \
+                                        -Dsonar.host.url=${SONAR_HOST} \
+                                        -Dsonar.login=${SONAR_TOKEN}
+                                '''
+                            }
                         }
                     }
                 }
