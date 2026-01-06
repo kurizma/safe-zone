@@ -21,6 +21,9 @@ pipeline {
         // Credentials
         SLACK_WEBHOOK = credentials('webhook-slack-safe-zone')
 
+        SONAR_TOKEN = credentials('sonarqube-token')
+        SONAR_HOST_URL = credentials('sonarqube-host-url')
+
         // Image versioning
         VERSION    = "v${env.BUILD_NUMBER}"
         STABLE_TAG = "stable"
@@ -150,6 +153,90 @@ pipeline {
                 }
             }
         }
+
+        /****************************
+        * SonarQube Code Analysis *
+        ****************************/
+        stage('SonarQube Analysis - Backend') {
+            steps {
+                script {
+                    // Analyze discovery-service
+                    dir('backend/discovery-service') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-discovery-service \
+                                -Dsonar.projectName="Safe Zone - Discovery Service" \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                    // Analyze gateway-service
+                    dir('backend/gateway-service') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-gateway-service \
+                                -Dsonar.projectName="Safe Zone - Gateway Service" \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                    // Analyze user-service
+                    dir('backend/user-service') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-user-service \
+                                -Dsonar.projectName="Safe Zone - User Service" \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                    // Analyze product-service
+                    dir('backend/product-service') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-product-service \
+                                -Dsonar.projectName="Safe Zone - Product Service" \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                    // Analyze media-service
+                    dir('backend/media-service') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-media-service \
+                                -Dsonar.projectName="Safe Zone - Media Service" \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Analysis - Frontend') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        npm install -g @angular/cli
+                        npm ci
+                        npx sonar-scanner \
+                            -Dsonar.projectKey=safe-zone-frontend \
+                            -Dsonar.projectName="Safe Zone - Frontend" \
+                            -Dsonar.sources=src \
+                            -Dsonar.exclusions=**/*.spec.ts,node_modules/** \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=${SONAR_TOKEN}
+                    '''
+                }
+            }
+        }
+
 
         /************************
          * Build Docker images  *
