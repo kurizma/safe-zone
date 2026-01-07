@@ -370,38 +370,17 @@ pipeline {
                 }
             }
         }
+        stage('Debug') {
+            steps {
+                script {
+                    echo "Final result BEFORE post: ${currentBuild.currentResult}"
+                    sh 'echo Exit code: $?'                
+                }
+            }
+        }
     }
     // end of stages
 
-    // post {
-    //     always {
-    //         script {
-    //             // Clean workspace
-    //             if (env.WORKSPACE) {
-    //                 cleanWs notFailBuild: true
-    //             } else {
-    //                 echo "No workspace available; skipping cleanWs"
-    //             }
-    //             // Post GitHub status
-    //             step([
-    //                 $class: "GitHubCommitStatusSetter",
-    //                 reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/mareerray/java-jenk"],
-    //                 contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "safezone"],
-    //                 statusResultSource: [$class: "ConditionalStatusResultSource", 
-    //                     results: [[$class: "AnyBuildResult", state: "${currentBuild.result}", message: "Build ${currentBuild.result}"]]
-    //                 ]
-    //             ])
-    //             step([
-    //                 $class: "GitHubCommitStatusSetter",
-    //                 reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/mareerray/java-jenk"],
-    //                 contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "safe-quality-gate"],
-    //                 statusResultSource: [$class: "ConditionalStatusResultSource", 
-    //                     results: [[$class: "AnyBuildResult", state: "${currentBuild.result}", message: "Quality gate ${currentBuild.result}"]]
-    //                 ]
-    //             ])
-    //         }
-    //     }
-    
     post {
         always {
             script {
