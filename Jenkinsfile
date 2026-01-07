@@ -409,9 +409,10 @@ pipeline {
                 withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                     def emoji = (buildState == 'success') ? ':white_check_mark:' : ':x:'
                     sh """
-                        curl -sS -X POST -H 'Content-type: application/json' \\
-                            --data '{"text":"${emoji} *${buildState.toUpperCase()}*\\*Job:* ${JOB_NAME}\\*Build:* ${BUILD_NUMBER}\\*Branch:* ${BRANCH ?: GIT_BRANCH}"}' \\
-                            "\${SLACK_WEBHOOK}" || true
+                        curl -sS -X POST \\
+                                    -H 'Content-type: application/json' \\
+                                    --data '${emoji} *${buildState.toUpperCase()}* Job: ${JOB_NAME} Build: ${BUILD_NUMBER} Branch: ${BRANCH_NAME ?: GIT_BRANCH}' \\
+                                    "\${SLACK_WEBHOOK}" || true                    
                     """
                 }
             }
