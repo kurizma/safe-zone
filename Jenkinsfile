@@ -46,7 +46,7 @@ pipeline {
                     branches: [[name: "*/${params.BRANCH}"]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/mareerray/java-jenk.git',
-                        credentialsId: 'github-safe-zone-token'
+                        credentialsId: 'github-safezone-token'
                     ]]
                 ])
             }
@@ -412,7 +412,7 @@ pipeline {
                 
                 // GitHub statuses
                 if (env.GIT_COMMIT) {
-                    withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'github-safezone-token', variable: 'GITHUB_TOKEN')]) {
                         sh """
                             curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
                                 -X POST -H "Accept: application/vnd.github.v3+json" \\
