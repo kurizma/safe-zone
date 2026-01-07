@@ -388,7 +388,7 @@ pipeline {
                     echo "No workspace available; skipping cleanWs"
                 }
                 // Post GitHub status
-                withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([string(credentialsId: 'github-safezone-token', variable: 'GITHUB_TOKEN')]) {
                     githubStatus(context: 'safezone', state: currentBuild.result, message: "Build ${currentBuild.result}")
                     githubStatus(context: 'safe-quality-gate', state: currentBuild.result, message: "Quality gate ${currentBuild.result}")
                 }
