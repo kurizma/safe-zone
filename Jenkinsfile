@@ -403,42 +403,40 @@ pipeline {
     //     }
     
     post {
-        always {
+        success {
             script {
-                cleanWs notFailBuild: true
+                echo 'Build succeeded!'
+                // GitHub success status
                 if (env.GIT_COMMIT) {
                     withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
-                        sh(returnStdout: true, script: """
-                            curl -s -H 'Authorization: token ${GITHUB_TOKEN}' \\
-                                -X POST -H 'Accept: application/vnd.github.v3+json' \\
-                                -d '{"state":"${currentBuild.currentResult}", "context":"safezone", "description":"Build"}' \\
-                                https://api.github.com/repos/mareerray/java-jenk/statuses/${GIT_COMMIT}
-                        """)
+                        sh """
+                            curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
+                                -X POST -H "Accept: application/vnd.github.v3+json" \\
+                                -d '{"state":"success", "context":"safezone", "description":"Build success"}' \\
+                                https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
+                        """
                     }
                 }
             }
         }
-
-        success {
-            echo "Build succeeded! Sending Slack notification..."
-            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
-                sh """
-                    curl -sS -X POST -H 'Content-type: application/json' --data '{
-                        "text": ":white_check_mark: Build SUCCESS\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}"
-                    }' "${SLACK_WEBHOOK_URL}" || echo "Slack notification failed (non-fatal)"
-                """
+        failure {
+            script {
+                echo 'Build failed!'
+                // GitHub failure status
+                if (env.GIT_COMMIT) {
+                    withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
+                        sh """
+                            curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
+                                -X POST -H "Accept: application/vnd.github.v3+json" \\
+                                -d '{"state":"failure", "context":"safezone", "description":"Build failed"}' \\
+                                https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
+                        """
+                    }
+                }
             }
         }
-
-        failure {
-            echo "Build failed! Sending Slack notification..."
-            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
-                sh """
-                    curl -sS -X POST -H 'Content-type: application/json' --data '{
-                        "text": ":x: Build FAILED\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Result:* ${currentBuild.currentResult}"
-                    }' "${SLACK_WEBHOOK_URL}" || echo "Slack notification failed (non-fatal)"
-                """
-            }
+        always {
+            cleanWs notFailBuild: true
         }
     }
 }
