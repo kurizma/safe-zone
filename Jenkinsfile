@@ -344,22 +344,22 @@ pipeline {
                                 }
                                 echo "Rolled back to previous stable version."
 
-                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
+                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                                     sh '''
                                     curl -sS -X POST -H "Content-type: application/json" --data "{
                                         \\"text\\": \\":information_source: Rollback SUCCESSFUL!\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${BRANCH}\\"
-                                    }" "${SLACK_WEBHOOK_URL}" || echo "Slack notification failed (non-fatal)"
+                                    }" "${SLACK_WEBHOOK}" || echo "Slack notification failed (non-fatal)"
                                     '''
                                 }
                             } catch (Exception rollbackErr) {
                                 echo "FATAL: Rollback failed!"
                                 echo "Reason: ${rollbackErr.getMessage()}"
 
-                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK_URL')]) {
+                                withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                                     sh '''
                                     curl -sS -X POST -H "Content-type: application/json" --data "{
                                         \\"text\\": \\":rotating_light: Rollback FAILED\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${BRANCH}\\n*Reason:* see Jenkins logs\\"
-                                    }" "${SLACK_WEBHOOK_URL}" || echo "Slack notification failed (non-fatal)"
+                                    }" "${SLACK_WEBHOOK}" || echo "Slack notification failed (non-fatal)"
                                     '''
                                 }
                             }
