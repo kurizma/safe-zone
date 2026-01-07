@@ -402,38 +402,40 @@ pipeline {
     //         }
     //     }
     
-    post {
-    always {
-        script {
-            // Clean workspace safely
-            if (env.WORKSPACE) {
-                cleanWs notFailBuild: true
-            } else {
-                echo "No workspace available; skipping cleanWs"
-            }
-            
-            // Post safezone build status to GitHub
-            withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
-                sh """
-                    curl -H "Authorization: token \${GITHUB_TOKEN}" \\
-                        -X POST \\
-                        -H "Accept: application/vnd.github.v3+json" \\
-                        -d '{"state":"${currentBuild.currentResult ?: 'success'}", "context":"safezone", "description":"Jenkins Build ${currentBuild.currentResult ?: 'success'}"}' \\
-                        https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
-                """
-                
-                // Post SonarQube quality gate status
-                sh """
-                    curl -H "Authorization: token \${GITHUB_TOKEN}" \\
-                        -X POST \\
-                        -H "Accept: application/vnd.github.v3+json" \\
-                        -d '{"state":"${currentBuild.currentResult ?: 'success'}", "context":"safe-quality-gate", "description":"SonarQube Quality Gate ${currentBuild.currentResult ?: 'success'}"}' \\
-                        https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
-                """
+        post {
+            always {
+                script {
+                    // Clean workspace safely
+                    if (env.WORKSPACE) {
+                        cleanWs notFailBuild: true
+                    } else {
+                        echo 'No workspace available; skipping cleanWs'
+                    }
+                    
+                    // Post statuses only if GIT_COMMIT exists
+                    if (env.GIT_COMMIT) {
+                        withCredentials([string(credentialsId: 'github-safe-zone-token', variable: 'GITHUB_TOKEN')]) {
+                            sh """
+                                curl -H 'Authorization: token \${GITHUB_TOKEN}' \\
+                                -X POST \\
+                                -H 'Accept: application/vnd.github.v3+json' \\
+                                -d '{"state":"${currentBuild.currentResult ?: 'success'}", "context":"safezone", "description":"Jenkins Build \${currentBuild.currentResult ?: 'success'}"}' \\
+                                https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
+                            """
+                            sh """
+                                curl -H 'Authorization: token \${GITHUB_TOKEN}' \\
+                                -X POST \\
+                                -H 'Accept: application/vnd.github.v3+json' \\
+                                -d '{"state":"${currentBuild.currentResult ?: 'success'}", "context":"safe-quality-gate", "description":"SonarQube Quality Gate \${currentBuild.currentResult ?: 'success'}"}' \\
+                                https://api.github.com/repos/mareerray/java-jenk/statuses/\${GIT_COMMIT}
+                            """
+                        }
+                    } else {
+                        echo 'No GIT_COMMIT; skipping GitHub status'
+                    }
+                }
             }
         }
-    }
-}
 
 
         success {
