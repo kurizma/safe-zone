@@ -142,6 +142,7 @@ pipeline {
          * Frontend *
          ************/
         stage('Frontend - Tests Included') {
+            options { timeout(time: 6, unit: 'MINUTES') }
             steps {
                 dir('frontend') {
                     // nodejs(nodeJSInstallationName: 'node-20.19.6') 
@@ -156,7 +157,6 @@ pipeline {
             }
         }
 
-        options { timeout(time: 6, unit: 'MINUTES') }
 
         /****************************
         * SonarQube Code Analysis *
