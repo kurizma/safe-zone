@@ -74,6 +74,7 @@ pipeline {
         stage('Backend Build - user-service') {
             steps {
                 dir('backend/user-service') {
+                    sh 'pwd && ls -la backend/user-service/target/'
                     sh 'mvn clean package -DskipTests'
                 }
             }
