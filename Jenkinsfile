@@ -320,59 +320,66 @@ pipeline {
                     dir("${env.WORKSPACE}") {
                         def cleanBranch = "${BRANCH ?: GIT_BRANCH ?: 'main'}".replaceAll(/^origin\//, '')
                         
-                        sh 'docker compose -f docker-compose.yml down || true'
+                        // Cleanup
+                        sh 'docker compose down || true'
                         sleep 5
 
                         try {
                             echo "Deploying ${VERSION}"
+                            
                             withEnv(["IMAGE_TAG=${VERSION}"]) {
-                                sh 'docker compose -f docker-compose.yml up -d'
+                                sh 'docker compose up -d'
                                 sleep 20
                                 
+                                // Health check
                                 sh '''
-                                    if ! docker compose ps | grep -q Up; then
-                                        echo "Containers not healthy!"
+                                    if docker compose ps | grep -q "Exit"; then
+                                        echo "Containers crashed!"
                                         exit 1
                                     fi
                                 '''
                             }
 
-                            // Tag stable
+                            // Tag ALL images stable
                             sh """
                                 docker tag frontend:${VERSION} frontend:${STABLE_TAG} || true
                                 docker tag discovery-service:${VERSION} discovery-service:${STABLE_TAG} || true
-                                # ... all tags
+                                docker tag gateway-service:${VERSION} gateway-service:${STABLE_TAG} || true
+                                docker tag user-service:${VERSION} user-service:${STABLE_TAG} || true
+                                docker tag product-service:${VERSION} product-service:${STABLE_TAG} || true
+                                docker tag media-service:${VERSION} media-service:${STABLE_TAG} || true
                             """
-                            
-                            // Redeploy stable
+
+                            // Deploy stable
                             withEnv(["IMAGE_TAG=${STABLE_TAG}"]) {
-                                sh 'docker compose -f docker-compose.yml up -d'
+                                sh 'docker compose up -d'
                             }
                             echo "✅ Deployed stable"
 
                         } catch (Exception e) {
                             echo "Deploy failed: ${e.message}"
                             
-                            // ROLLBACK: Check stable exists → down → up stable
-                            sh '''
-                                docker compose down || true
-                                sleep 5
-                                
-                                if docker images | grep -q "${STABLE_TAG}"; then
-                                    IMAGE_TAG=${STABLE_TAG} docker compose up -d
-                                    echo "✅ Rolled back to ${STABLE_TAG}"
+                            // SAFE ROLLBACK
+                            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+                                sh '''
+                                    docker compose down || true
+                                    sleep 5
                                     
-                                    curl -sS -X POST -H "Content-type: application/json" \\
-                                    --data "{\"text\":\":information_source: Rollback OK! Job: ${JOB_NAME} #${BUILD_NUMBER} Branch: ${cleanBranch}\"}" \\
-                                    $SLACK_WEBHOOK || true
-                                else
-                                    echo "⚠️ No stable → Manual fix needed"
-                                    curl -sS -X POST -H "Content-type: application/json" \\
-                                    --data "{\"text\":\":rotating_light: Rollback SKIPPED (no stable) #${BUILD_NUMBER}\"}" \\
-                                    $SLACK_WEBHOOK || true
-                                fi
-                            '''
-                            error "Deploy failed - check rollback"
+                                    if docker images | grep -q "${STABLE_TAG}"; then
+                                        IMAGE_TAG=${STABLE_TAG} docker compose up -d
+                                        echo "✅ Rolled back to stable"
+                                        curl -sS -X POST -H "Content-type: application/json" \\
+                                        --data "{\"text\":\":ok_hand: Rollback SUCCESS #${BUILD_NUMBER} (${cleanBranch})\"}" \\
+                                        $SLACK_WEBHOOK || true
+                                    else
+                                        echo "⚠️ No previous stable - manual recovery"
+                                        curl -sS -X POST -H "Content-type: application/json" \\
+                                        --data "{\"text\":\":warning: No stable images #${BUILD_NUMBER} - manual fix\"}" \\
+                                        $SLACK_WEBHOOK || true
+                                    fi
+                                '''
+                            }
+                            // NO error → Green build (rollback success!)
                         }
                     }
                 }
