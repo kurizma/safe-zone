@@ -84,10 +84,6 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
-
-    public void compileBreak() {
-        String x = 123;  // Type error
-    }
 }
 
 

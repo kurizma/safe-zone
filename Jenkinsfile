@@ -160,6 +160,7 @@ pipeline {
             steps {
                 script {
                     def testFailed = false
+                    def cleanBranch = "${BRANCH ?: GIT_BRANCH ?: 'main'}".replaceAll(/^origin\//, '')
                     try {
                         sh 'find . -name "*.xml" -path "*/surefire-reports/*.xml" | head -1 && echo "Tests passed" || testFailed = true'
                     } catch (e) {
@@ -169,7 +170,7 @@ pipeline {
                         withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                             sh '''
                                 curl -sS -X POST -H "Content-type: application/json" --data "{
-                                    \\"text\\": \\":x: TESTS FAILED!\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${BRANCH}
+                                    \\"text\\": \\":x: TESTS FAILED!\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${cleanBranch}
                                 }" "${SLACK_WEBHOOK}"
                             '''
                         }
