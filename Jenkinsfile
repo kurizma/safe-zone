@@ -149,13 +149,14 @@ pipeline {
                         sh 'npm ci'
                         sh 'npm test'
                         // sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --no-progress'
-                        sh 'ls -la test-results/ || echo "No test-results dir"'
-                        sh 'find workspace -name "frontend-tests.xml" || echo "XML NOWHERE"'
+                        sh 'ls -la test-results/junit/ || echo "No test-results dir"'
                         sh 'npx ng build --configuration production'
                     
                 }
             }
         }
+
+        options { timeout(time: 6, unit: 'MINUTES') }
 
         /****************************
         * SonarQube Code Analysis *
