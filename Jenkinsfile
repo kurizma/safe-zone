@@ -240,13 +240,12 @@ pipeline {
                             withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
                                         string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
                                 sh '''
-                                    npm ci
                                     sonar-scanner \
                                         -Dsonar.projectKey=safe-zone-frontend \
                                         -Dsonar.projectName="Safe Zone - Frontend" \
                                         -Dsonar.sources=src \
-                                        -Dsonar.java.binaries=target/classes \
-                                        -Dsonar.exclusions=**/*.spec.ts,node_modules/** \
+                                        -Dsonar.exclusions=**/*.spec.ts,node_modules/**,dist/**,coverage/** \
+                                        -Dsonar.cpd.exclusions=**/*.spec.ts,node_modules/** \
                                         -Dsonar.host.url=${SONAR_HOST} \
                                         -Dsonar.login=${SONAR_TOKEN}
                                 '''
