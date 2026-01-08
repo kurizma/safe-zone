@@ -353,35 +353,25 @@ pipeline {
                             currentBuild.result = 'SUCCESS'
 
                         } catch (Exception e) {
-                            echo "❌ Deploy failed: ${e.message} - Rolling back to ${STABLE_TAG}"
+                            echo "❌ Deploy failed: ${e.message}"
                             
                             // Rollback: Always deploy known stable
                             sh """
+                                STABLE_TAG=\${STABLE_TAG:-latest}
                                 docker compose down || true
-                                IMAGE_TAG=${STABLE_TAG} docker compose up -d --pull never
+                                IMAGE_TAG=\$STABLE_TAG docker compose up -d --pull never
                                 sleep 10
                                 docker compose ps  # Verify
+                                echo "✅ Rolled back to \$STABLE_TAG"
                             """
                             
                             withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
-                                sh """
-                                    curl -sS -X POST -H 'Content-type: application/json' \\
-                                    --data '{
-                                        "channel": "#safe-zone",
-                                        "text": "🚨 *Rollback Triggered* #${BUILD_NUMBER}",
-                                        "attachments": [{
-                                            "color": "danger",
-                                            "fields": [
-                                                {"title": "Cause", "value": "${e.message}", "short": false},
-                                                {"title": "Version", "value": "${VERSION} → ${STABLE_TAG}", "short": true},
-                                                {"title": "Branch", "value": "${cleanBranch}", "short": true}
-                                            ]
-                                        }]
-                                    }' \${SLACK_WEBHOOK}
-                                """
-                            }
-                            currentBuild.result = 'UNSTABLE'  // Not FAILURE to show rollback worked
-                            throw e  // Mark stage failed but build unstable
+                            sh """
+                                curl -sS -X POST -H 'Content-type: application/json' --data '{\"text\":\"🚨 Rollback to \${STABLE_TAG:-latest} #${BUILD_NUMBER}\"}' \$SLACK_WEBHOOK || true
+                            """
+                        }
+                        currentBuild.result = 'UNSTABLE'
+                        throw e
                         }
                     }
                 }

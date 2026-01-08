@@ -92,6 +92,7 @@ services:
 
   # === FRONTEND ===
   frontend:
+      build: ./frontend
       image: frontend:v999-broken-nonexistent
       container_name: frontend-v999-broken
       ports: ["4200:443"]
