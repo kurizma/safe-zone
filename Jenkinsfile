@@ -359,27 +359,27 @@ pipeline {
                         } catch (Exception e) {
                             echo "Deploy failed: ${e.message}"
                             
-                            // SAFE ROLLBACK
-                            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+                            **withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {**
                                 sh '''
                                     docker compose down || true
                                     sleep 5
                                     
                                     if docker images | grep -q "${STABLE_TAG}"; then
                                         IMAGE_TAG=${STABLE_TAG} docker compose up -d
-                                        echo "✅ Rolled back to stable"
-                                        curl -sS -X POST -H "Content-type: application/json" \\
-                                        --data "{\"text\":\":ok_hand: Rollback SUCCESS #${BUILD_NUMBER} (${cleanBranch})\"}" \\
-                                        $SLACK_WEBHOOK || true
+                                        echo "✅ Rolled back to ${STABLE_TAG}"
+                                        
+                                        **curl -sS -X POST -H "Content-type: application/json" \\
+                                        --data '{"text":":ok_hand: Rollback SUCCESS #${BUILD_NUMBER}"}' \\
+                                        ${SLACK_WEBHOOK} || true**
                                     else
-                                        echo "⚠️ No previous stable - manual recovery"
-                                        curl -sS -X POST -H "Content-type: application/json" \\
-                                        --data "{\"text\":\":warning: No stable images #${BUILD_NUMBER} - manual fix\"}" \\
-                                        $SLACK_WEBHOOK || true
+                                        echo "⚠️ No stable → Manual fix"
+                                        **curl -sS -X POST -H "Content-type: application/json" \\
+                                        --data '{"text":":warning: Rollback SKIPPED #${BUILD_NUMBER}"}' \\
+                                        ${SLACK_WEBHOOK} || true**
                                     fi
                                 '''
-                            }
-                            // NO error → Green build (rollback success!)
+                            **}**
+                            // Remove error line for green build
                         }
                     }
                 }
