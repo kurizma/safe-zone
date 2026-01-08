@@ -99,11 +99,11 @@ services:
   #   depends_on: [gateway-service]
 
   # CRASH TEST (no build)  
-    frontend:
-      image: frontend:v999-broken-nonexistent
-      container_name: frontend-v999-broken
-      ports: ["4200:443"]
-      depends_on: [gateway-service]
+  frontend:
+    image: frontend:v999-broken-nonexistent
+    container_name: frontend-v999-broken
+    ports: ["4200:443"]
+    depends_on: [gateway-service]
 
 volumes:
   kafka_data:
