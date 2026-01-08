@@ -331,7 +331,7 @@ pipeline {
                             withEnv(["IMAGE_TAG=${VERSION}"]) {
                                 // Fail fast if frontend can't build/pull
                                 sh 'docker compose build frontend || exit 1'
-                                sh 'docker compose build --pull always'  
+                                sh 'docker compose build --pull'  
                                 sh '''
                                     docker tag frontend:${VERSION} frontend:${STABLE_TAG} frontend:build-${BUILD_NUMBER}
                                     docker tag discovery-service:${VERSION} discovery-service:${STABLE_TAG} discovery-service:build-${BUILD_NUMBER}
@@ -364,15 +364,13 @@ pipeline {
                                 IMAGE_TAG=\$STABLE_TAG docker compose up -d --pull never
                                 sleep 10
                                 docker compose ps  # Verify
-                                # Get previous build from image labels/history
-                                PREV_BUILD=\$(docker inspect frontend:\$STABLE_TAG | jq -r '.[0].Config.Labels["org.label-schema.build"] // \"unknown\"' || echo \$STABLE_TAG)
-                                echo "✅ Rolled back to \$STABLE_TAG (build \$PREV_BUILD)"
+                                echo "✅ Rolled back to \$STABLE_TAG"
                             """
                             
                             withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                             sh """
                                 curl -sS -X POST -H 'Content-type: application/json' \\
-                                    --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → \$PREV_BUILD (\$STABLE_TAG)\"}' \$SLACK_WEBHOOK || true
+                                    --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → \$STABLE_TAG\"}' \$SLACK_WEBHOOK || true
                             """
                         }
                         currentBuild.result = 'UNSTABLE'
@@ -530,14 +528,6 @@ pipeline {
         //                     error "Deployment failed - rollback executed."
         //                 }
         //             }
-        //         }
-        //     }
-        // }
-        // stage('Debug') {
-        //     steps {
-        //         script {
-        //             echo "Final result BEFORE post: ${currentBuild.currentResult}"
-        //             sh 'echo Exit code: $?'                
         //         }
         //     }
         // }
