@@ -361,6 +361,8 @@ pipeline {
                             sh """
                                 STABLE_TAG=\${STABLE_TAG:-latest}
                                 docker compose down || true
+                                # Use good compose for rollback (copy from main)
+                                git checkout HEAD~1 -- docker-compose.yml || true
                                 IMAGE_TAG=\$STABLE_TAG docker compose up -d --pull never
                                 sleep 10
                                 docker compose ps  # Verify
