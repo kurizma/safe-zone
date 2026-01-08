@@ -144,13 +144,13 @@ pipeline {
         stage('Frontend - Tests Included') {
             steps {
                 dir('frontend') {
-                    // nodejs(nodeJSInstallationName: 'node-20.19.6') 
+                    nodejs(nodeJSInstallationName: 'node-20.19.6') 
                     
                         sh 'npm ci'
-                        sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --no-progress'
+                        sh 'npm test'
+                        // sh 'npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox --no-progress'
                         sh 'ls -la test-results/ || echo "No test-results dir"'
-                        sh 'find . -name "*.xml" -path "*/junit/*" || echo "No junit XML found"'
-                        sh 'pwd && ls -la'
+                        sh 'find workspace -name "frontend-tests.xml" || echo "XML NOWHERE"'
                         sh 'npx ng build --configuration production'
                     
                 }
