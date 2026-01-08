@@ -356,25 +356,24 @@ pipeline {
 
                         } catch (Exception e) {
                             echo "❌ Deploy failed: ${e.message}"
+
+                            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+                                sh """
+                                    curl -sS -X POST -H 'Content-type: application/json' \\
+                                        --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → \$STABLE_TAG\"}' \$SLACK_WEBHOOK 
+                                """
+                            }
+
                             
                             // Rollback: Always deploy known stable
                             sh """
                                 STABLE_TAG=\${STABLE_TAG:-latest}
                                 docker compose down || true
-                                # Use good compose for rollback (copy from main)
-                                git checkout HEAD~1 -- docker-compose.yml || true
                                 IMAGE_TAG=\$STABLE_TAG docker compose up -d --pull never
                                 sleep 10
                                 docker compose ps  # Verify
                                 echo "✅ Rolled back to \$STABLE_TAG"
-                            """
-                            
-                            withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
-                            sh """
-                                curl -sS -X POST -H 'Content-type: application/json' \\
-                                    --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → \$STABLE_TAG\"}' \$SLACK_WEBHOOK 
-                            """
-                        }
+                            """                       
                         currentBuild.result = 'UNSTABLE'
                         throw e
                         }
