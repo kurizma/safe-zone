@@ -419,7 +419,7 @@ pipeline {
                     sh """
                         curl -sS -X POST \\
                             -H 'Content-type: application/json' \\
-                            -d '{"text":"${emoji} *${buildState.toUpperCase()}*\\nJob: ${JOB_NAME}\\nBuild: #${BUILD_NUMBER}\\nBranch: ${cleanBRANCH}\\nCommit: <https://github.com/mareerray/java-jenk/commit/${GIT_COMMIT}|${GIT_COMMIT[0..7]}>"}' \\
+                            -d '{"text":"${emoji} *${buildState.toUpperCase()}*\\nJob: ${JOB_NAME}\\nBuild: #${BUILD_NUMBER}\\nBranch: ${cleanBranch}\\nCommit: <https://github.com/mareerray/java-jenk/commit/${GIT_COMMIT}|${GIT_COMMIT[0..7]}>"}' \\
                             \$SLACK_WEBHOOK || true
                     """
                 }
@@ -428,8 +428,10 @@ pipeline {
 
                 archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
                 archiveArtifacts artifacts: 'frontend/test-results/junit/*.xml', allowEmptyArchive: true
-                junit '**/target/surefire-reports/*.xml'
-                junit '**/test-results/junit/*.xml'
+                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                junit allowEmptyResults: true, testResults: '**/test-results/junit/*.xml'
+                // junit '**/target/surefire-reports/*.xml'
+                // junit '**/test-results/junit/*.xml'
                 
                 if (env.GIT_COMMIT) {
                     withCredentials([string(credentialsId: 'github-safezone-token', variable: 'GITHUB_TOKEN')]) {
