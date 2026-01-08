@@ -355,12 +355,14 @@ pipeline {
                             currentBuild.result = 'SUCCESS'
 
                         } catch (Exception e) {
+                            def stableTag = env.STABLE_TAG ?: 'latest'
+
                             echo "❌ Deploy failed: ${e.message}"
 
                             withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
                                 sh """
                                     curl -sS -X POST -H 'Content-type: application/json' \\
-                                        --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → \$STABLE_TAG\"}' \$SLACK_WEBHOOK 
+                                        --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → ${stableTag}\"}' \$SLACK_WEBHOOK 
                                 """
                             }
 
@@ -372,7 +374,7 @@ pipeline {
                                 IMAGE_TAG=\$STABLE_TAG docker compose up -d --pull never
                                 sleep 10
                                 docker compose ps  # Verify
-                                echo "✅ Rolled back to \$STABLE_TAG"
+                                echo "✅ Rolled back to ${stableTag}"
                             """                       
                         currentBuild.result = 'UNSTABLE'
                         throw e
