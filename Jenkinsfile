@@ -275,7 +275,7 @@ pipeline {
                                     sonar-scanner \
                                         -Dsonar.projectKey=safe-zone-frontend \
                                         -Dsonar.projectName="Safe Zone - Frontend" \
-                                        -Dsonar.sources=src \
+                                        -Dsonar.sources=src/app \
                                         -Dsonar.exclusions=**/*.spec.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env* \
                                         -Dsonar.cpd.exclusions=**/*.spec.ts,node_modules/** \
                                         -Dsonar.host.url=${SONAR_HOST} \
