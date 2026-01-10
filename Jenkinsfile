@@ -276,10 +276,8 @@ pipeline {
                                         -Dsonar.projectKey=safe-zone-frontend \
                                         -Dsonar.projectName="Safe Zone - Frontend" \
                                         -Dsonar.sources=src/app \
-                                        -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,\
-                                            node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/**,\
-                                            **/README.md,**/*.config.*,**/*.conf.*,**/*.min.js
-                                        -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/**,dist/**
+                                        -Dsonar.exclusions=**/*.spec.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env* \
+                                        -Dsonar.cpd.exclusions=**/*.spec.ts,node_modules/** \
                                         -Dsonar.host.url=${SONAR_HOST} \
                                         -Dsonar.token=${SONAR_TOKEN}
                                 '''
@@ -315,10 +313,9 @@ pipeline {
                 script {
                     echo "Building Docker images with tag: ${VERSION}"
                     dir("${env.WORKSPACE}") {
-                        withEnv([
-                            "IMAGE_TAG=${VERSION}",
-                            "JAVA_TOOL_OPTIONS=-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.HEARTBEAT_CHECK_INTERVAL=86400"
-                            ]) {
+                        withEnv(["IMAGE_TAG=${VERSION}",
+                        "JAVA_TOOL_OPTIONS=-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.HEARTBEAT_CHECK_INTERVAL=86400"
+                        ]) {
                             sh 'docker compose -f docker-compose.yml build --parallel --progress=plain'
                         }
                     }
