@@ -180,7 +180,6 @@ pipeline {
             }
         }
 
-
         /****************************
         * SonarQube Code Analysis *
         ****************************/
@@ -201,7 +200,7 @@ pipeline {
                                         -Dsonar.sources=src \
                                         -Dsonar.java.binaries=target/classes \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                             dir('backend/gateway-service') {
@@ -212,7 +211,7 @@ pipeline {
                                         -Dsonar.sources=src \
                                         -Dsonar.java.binaries=target/classes \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                             dir('backend/user-service') {
@@ -223,7 +222,7 @@ pipeline {
                                         -Dsonar.sources=src \
                                         -Dsonar.java.binaries=target/classes \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                             dir('backend/product-service') {
@@ -234,7 +233,7 @@ pipeline {
                                         -Dsonar.sources=src \
                                         -Dsonar.java.binaries=target/classes \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                             dir('backend/media-service') {
@@ -245,7 +244,7 @@ pipeline {
                                         -Dsonar.sources=src \
                                         -Dsonar.java.binaries=target/classes \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                         }
@@ -255,6 +254,9 @@ pipeline {
         }
 
         stage('SonarQube Analysis - Frontend') {
+            options {
+                timeout(time: 15, unit: 'MINUTES')
+            }
             steps {
                 dir('frontend') {
                     script {
@@ -272,7 +274,7 @@ pipeline {
                                         -Dsonar.exclusions=**/*.spec.ts,node_modules/**,dist/**,coverage/** \
                                         -Dsonar.cpd.exclusions=**/*.spec.ts,node_modules/** \
                                         -Dsonar.host.url=${SONAR_HOST} \
-                                        -Dsonar.login=${SONAR_TOKEN}
+                                        -Dsonar.token=${SONAR_TOKEN}
                                 '''
                             }
                         }
