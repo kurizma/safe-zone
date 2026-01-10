@@ -7,7 +7,7 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.ContextConfiguration;
 
 
-@SpringBootTest
+@SpringBootTest(classes = {})
 @ContextConfiguration(classes = {})
 class GatewayServiceApplicationTests {
     
