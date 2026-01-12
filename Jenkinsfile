@@ -262,9 +262,6 @@ pipeline {
 		}
 
 		stage('SonarQube Analysis - Frontend') {
-			options {
-				timeout(time: 15, unit: 'MINUTES')
-			}
 			steps {
 				dir('frontend') {
 					script {
@@ -309,9 +306,6 @@ pipeline {
 		 * Build Docker images  *
 		 ************************/
 		stage('Build Images') {
-			options {
-				timeout(time: 45, unit: 'MINUTES')   // per-stage timeout
-			}
 			steps {
 				script {
 					echo "Building Docker images with tag: ${VERSION}"
@@ -429,7 +423,7 @@ pipeline {
 
 				if (env.GIT_COMMIT) {
 					withCredentials([string(credentialsId: 'safe-zone', variable: 'GITHUB_TOKEN')]) {
-						def ghState = (buildState == 'success') ? 'success' : 'failure'
+						// ghState = (buildState == 'success') ? 'success' : 'failure'
 
 						sh """
 							set +e
