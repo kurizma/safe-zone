@@ -19,7 +19,7 @@ pipeline {
 
 	environment {
 		// Credentials
-		SLACK_WEBHOOK = credentials('webhook-slack-safe-zone')
+		SLACK_WEBHOOK = credentials('Slack Incoming webhook')
 		BRANCH = "${env.BRANCH_NAME ?: env.GIT_BRANCH ?: params.BRANCH ?: 'main'}"
 
 		// Image versioning
@@ -170,7 +170,7 @@ pipeline {
 						testFailed = true
 					}
 					if (testFailed) {
-						withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+						withCredentials([string(credentialsId: 'Slack Incoming webhook', variable: 'SLACK_WEBHOOK')]) {
 							sh '''
                                 curl -sS -X POST -H "Content-type: application/json" --data "{
                                     \\"text\\": \\":x: TESTS FAILED!\\n*Job:* ${JOB_NAME}\\n*Build:* ${BUILD_NUMBER}\\n*Branch:* ${cleanBranch}
@@ -193,7 +193,7 @@ pipeline {
 					env.PATH = "${scannerHome}/bin:${env.PATH}"
 
 					withSonarQubeEnv('SonarQube Dev') {
-						withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
+						withCredentials([string(credentialsId: 'SQT', variable: 'SONAR_TOKEN'),
 							string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
 							dir('backend/discovery-service') {
 								sh '''
@@ -272,7 +272,7 @@ pipeline {
 						env.PATH = "${scannerHome}/bin:${env.PATH}"
 
 						withSonarQubeEnv('SonarQube Dev') {
-							withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
+							withCredentials([string(credentialsId: 'SQT', variable: 'SONAR_TOKEN'),
 								string(credentialsId: 'sonarqube-host-url', variable: 'SONAR_HOST')]) {
 								sh '''
                                     sonar-scanner \
@@ -378,7 +378,7 @@ pipeline {
 
 							echo "❌ Deploy failed: ${e.message}"
 
-							withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+							withCredentials([string(credentialsId: 'Slack Incoming webhook', variable: 'SLACK_WEBHOOK')]) {
 								sh """
                                     curl -sS -X POST -H 'Content-type: application/json' \\
                                         --data '{\"text\":\"🚨 Rollback #${BUILD_NUMBER} → ${stableTag}\"}' \$SLACK_WEBHOOK
@@ -411,7 +411,7 @@ pipeline {
 				def ghState = (buildState == 'success') ? 'success' : 'failure'
 				def cleanBranch = "${BRANCH ?: GIT_BRANCH ?: 'main'}".replaceAll(/^origin\//, '')
 
-				withCredentials([string(credentialsId: 'webhook-slack-safe-zone', variable: 'SLACK_WEBHOOK')]) {
+				withCredentials([string(credentialsId: 'Slack Incoming webhook', variable: 'SLACK_WEBHOOK')]) {
 					def emoji = (buildState == 'success') ? ':white_check_mark:' : ':x:'
 					sh """
                         curl -sS -X POST \\
@@ -429,7 +429,7 @@ pipeline {
 				junit allowEmptyResults: true, testResults: '**/test-results/junit/*.xml'
 
 				if (env.GIT_COMMIT) {
-					withCredentials([string(credentialsId: 'github-safezone-token', variable: 'GITHUB_TOKEN')]) {
+					withCredentials([string(credentialsId: 'safe-zone', variable: 'GITHUB_TOKEN')]) {
 						// STATUS CHECK #1: Overall build status -> shows on GitHub ✅ safezone — Jenkins success
 						sh """
                             curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
